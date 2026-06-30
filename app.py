@@ -355,7 +355,6 @@ def lifestyle_score(favc, caec, smoke, family, faf, ch2o, calc):
     if favc == "yes": score += 2
     if fcvc < 2: score += 1
     if caec in ["Sometimes","Frequently","Always"]: score += (["Sometimes","Frequently","Always"].index(caec)+1)
-    if smoke == "yes": score += 2
     if family == "yes": score += 1
     score += max(0, 2 - faf)
     if ch2o < 2: score += 1
