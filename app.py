@@ -353,7 +353,7 @@ def bmi_category(bmi):
 def lifestyle_score(favc,fcvc, caec, family, faf, ch2o, calc):
     
     score = 0
-    if favc == "yes": score += 2
+    if favc == "yes": score += 1
     if fcvc < 2: score += 1
     if caec in ["Sometimes","Frequently","Always"]: score += (["Sometimes","Frequently","Always"].index(caec)+1)
     if family == "yes": score += 1
