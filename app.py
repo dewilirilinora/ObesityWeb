@@ -433,13 +433,13 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("** Kebiasaan & Gaya Hidup**")
-    ch2o = st.slider("Konsumsi Air Harian (liter) (CH2O)", 1.0, 3.0, 2.0, 0.10)
+    ch2o = st.slider("Konsumsi Air Harian (liter) (CH2O)", 1.0, 3.0, 2.0, 0.5)
     smoke= st.selectbox("Merokok (SMOKE)",
                          ["no","yes"], format_func=lambda x: "Tidak" if x=="no" else "Ya")
     scc  = st.selectbox("Monitoring Konsumsi Kalori (SCC)",
                          ["no","yes"], format_func=lambda x: "Tidak" if x=="no" else "Ya")
-    faf  = st.slider("Frekuensi Aktivitas Fisik per Minggu (FAF)", 0.0, 3.0, 1.0, 0.10)
-    tue  = st.slider("Durasi Penggunaan Perangkat Teknologi (jam/hari) (TUE)", 0.0, 2.0, 1.0, 0.10)
+    faf  = st.slider("Frekuensi Aktivitas Fisik per Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
+    tue  = st.slider("Durasi Penggunaan Perangkat Teknologi (jam/hari) (TUE)", 0.0, 2.0, 1.0, 0.5)
     calc = st.selectbox("Konsumsi Alkohol (CALC)",
                          ["no","Sometimes","Frequently","Always"],
                          format_func=lambda x: {
