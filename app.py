@@ -350,19 +350,18 @@ def bmi_category(bmi):
     else:
         return "Obesitas", "#e53935", "#ffebee"
 
-def lifestyle_score(favc, caec, smoke, scc, faf, ch2o, calc):
+def lifestyle_score(favc, caec, smoke, family, faf, ch2o, calc):
     score = 0
     if favc == "yes": score += 2
     if fcvc < 2: score += 1
     if caec in ["Sometimes","Frequently","Always"]: score += (["Sometimes","Frequently","Always"].index(caec)+1)
     if smoke == "yes": score += 2
-    if scc == "no": score += 1
+    if family == "yes": score += 1
     score += max(0, 2 - faf)
     if ch2o < 2: score += 1
     if calc in ["Sometimes","Frequently"]: score += 1
     max_score = 10
     return min(score, max_score), max_score
-
 
 # ──────────────────────────────────────────────────────────────
 # HERO HEADER
@@ -495,7 +494,7 @@ with col_eval:
     """, unsafe_allow_html=True)
 
     # Lifestyle score
-    ls, ls_max = lifestyle_score(favc, caec, smoke, scc, faf, ch2o, calc)
+    ls, ls_max = lifestyle_score(favc, caec, smoke, ncp, faf, ch2o, calc)
     ls_pct = int(ls / ls_max * 100)
     ls_color = "#43a047" if ls <= 3 else ("#ef6c00" if ls <= 6 else "#e53935")
     ls_label = "Baik" if ls <= 3 else ("Perlu Perhatian" if ls <= 6 else "Berisiko Tinggi")
