@@ -359,7 +359,7 @@ def lifestyle_score(favc, caec, family, faf, ch2o, calc, ncp):
     score += max(0, 2 - faf)
     if ch2o < 2: score += 1
     if calc in ["Sometimes","Frequently","Always"]: score += 1
-    if ncp < 3: score +=1
+    if ncp < 2: score +=1
     max_score = 10
     return min(score, max_score), max_score
 
