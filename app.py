@@ -494,7 +494,7 @@ with col_eval:
     """, unsafe_allow_html=True)
 
     # Lifestyle score
-    ls, ls_max = lifestyle_score(favc, caec, smoke, ncp, faf, ch2o, calc)
+    ls, ls_max = lifestyle_score(favc, fcvc, caec, smoke, faf, ch2o, calc)
     ls_pct = int(ls / ls_max * 100)
     ls_color = "#43a047" if ls <= 3 else ("#ef6c00" if ls <= 6 else "#e53935")
     ls_label = "Baik" if ls <= 3 else ("Perlu Perhatian" if ls <= 6 else "Berisiko Tinggi")
