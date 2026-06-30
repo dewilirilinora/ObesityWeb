@@ -350,11 +350,7 @@ def bmi_category(bmi):
     else:
         return "Obesitas", "#e53935", "#ffebee"
 
-def lifestyle_score(favc, caec, family, faf, ch2o, calc, fcvc):
-    
-    fcvc = float(fcvc)
-    faf  = float(faf)
-    ch2o = float(ch2o)
+def lifestyle_score(favc,fcvc, caec, family, faf, ch2o, calc):
     
     score = 0
     if favc == "yes": score += 2
