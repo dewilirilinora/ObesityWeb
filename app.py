@@ -350,7 +350,7 @@ def bmi_category(bmi):
     else:
         return "Obesitas", "#e53935", "#ffebee"
 
-def lifestyle_score(favc, caec, smoke, family, faf, ch2o, calc):
+def lifestyle_score(favc, caec, family, faf, ch2o, calc):
     score = 0
     if favc == "yes": score += 2
     if fcvc < 2: score += 1
@@ -358,7 +358,7 @@ def lifestyle_score(favc, caec, smoke, family, faf, ch2o, calc):
     if family == "yes": score += 1
     score += max(0, 2 - faf)
     if ch2o < 2: score += 1
-    if calc in ["Sometimes","Frequently", "always"]: score += 1
+    if calc in ["Sometimes","Frequently","Always"]: score += 1
     max_score = 10
     return min(score, max_score), max_score
 
