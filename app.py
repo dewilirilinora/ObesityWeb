@@ -410,8 +410,8 @@ with st.sidebar:
     st.markdown("** Data Fisik**")
     gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
     age    = st.number_input("Usia (tahun)", min_value=10, max_value=60, value=25)
-    height = st.number_input("Tinggi Badan (m)", min_value=140, max_value=220,
-                              value=168, step=0.01, format="%.2f")
+    height = st.number_input("Tinggi Badan (m)", min_value=1.40, max_value=2.20,
+                              value=1.68, step=0.01, format="%.2f")
     weight = st.number_input("Berat Badan (kg)", min_value=30.0, max_value=250.0,
                               value=70.0, step=0.5, format="%.1f")
     family = st.selectbox("Riwayat Keluarga dengan Obesitas",
