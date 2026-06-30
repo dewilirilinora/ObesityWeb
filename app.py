@@ -353,6 +353,7 @@ def bmi_category(bmi):
 def lifestyle_score(favc, caec, smoke, scc, faf, ch2o, calc):
     score = 0
     if favc == "yes": score += 2
+    if fcvc < 2: score += 1
     if caec in ["Sometimes","Frequently","Always"]: score += (["Sometimes","Frequently","Always"].index(caec)+1)
     if smoke == "yes": score += 2
     if scc == "no": score += 1
@@ -421,8 +422,8 @@ with st.sidebar:
     st.markdown("Pola Makan")
     favc = st.selectbox("Konsumsi Makanan Tinggi Kalori (FAVC)",
                          ["yes","no"], format_func=lambda x: "Ya" if x=="yes" else "Tidak")
-    fcvc = st.slider("Frekuensi Konsumsi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.10)
-    ncp  = st.slider("Jumlah Makan Utama per Hari (NCP)", 1.0, 4.0, 3.0, 0.10)
+    fcvc = st.slider("Frekuensi Konsumsi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
+    ncp  = st.slider("Jumlah Makan Utama per Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
     caec = st.selectbox("Konsumsi Makanan Ringan (CAEC)",
                          ["no","Sometimes","Frequently","Always"],
                          index=1,
