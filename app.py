@@ -404,10 +404,10 @@ if not model_loaded:
 # SIDEBAR — INPUT DATA
 # ──────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## Input Data Pengguna")
+    st.markdown("Input Data Pengguna")
     st.markdown("---")
 
-    st.markdown("** Data Fisik**")
+    st.markdown("Data Fisik")
     gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
     age    = st.number_input("Usia (tahun)", min_value=10, max_value=60, value=25)
     height = st.number_input("Tinggi Badan (m)", min_value=1.40, max_value=2.20,
@@ -418,7 +418,7 @@ with st.sidebar:
                            ["yes", "no"], format_func=lambda x: "Ya" if x=="yes" else "Tidak")
 
     st.markdown("---")
-    st.markdown("** Pola Makan**")
+    st.markdown("Pola Makan")
     favc = st.selectbox("Konsumsi Makanan Tinggi Kalori (FAVC)",
                          ["yes","no"], format_func=lambda x: "Ya" if x=="yes" else "Tidak")
     fcvc = st.slider("Frekuensi Konsumsi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.10)
@@ -432,7 +432,7 @@ with st.sidebar:
                          }[x])
 
     st.markdown("---")
-    st.markdown("** Kebiasaan & Gaya Hidup**")
+    st.markdown("Kebiasaan & Gaya Hidup")
     ch2o = st.slider("Konsumsi Air Harian (liter) (CH2O)", 1.0, 3.0, 2.0, 0.5)
     smoke= st.selectbox("Merokok (SMOKE)",
                          ["no","yes"], format_func=lambda x: "Tidak" if x=="no" else "Ya")
