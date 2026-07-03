@@ -193,6 +193,7 @@ html, body, [class*="css"] {
 .result-banner .rb-label {
     font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.1em; margin-bottom: 4px; opacity: 0.7;
+    color: #000000 !important;
 }
 .result-banner .rb-title {
     font-family: 'DM Serif Display', serif;
@@ -273,11 +274,6 @@ div[data-testid="stButton"] button:hover { opacity: 0.88 !important; }
     border: 1.5px solid #e0dbd2 !important;
     background: #faf9f6 !important;
     color: #000
-}
-
-/* ── Judul Hasil Prediksi Model XGBoost warna hitam ── */
-.result-banner .rb-label {
-    color: #000000 !important;
 }
 
 /* Footer */
@@ -772,7 +768,7 @@ if predict_btn:
           <p class="section-subtitle">Ringkasan kondisi fisik dan indikator gaya hidup</p>
         """, unsafe_allow_html=True)
 
-        # Lifestyle score (BMI sudah dipindahkan ke kolom kanan)
+        # Lifestyle score
         ls, ls_max = lifestyle_score(favc, fcvc, caec, family, faf, ch2o, calc)
         ls_pct = int(ls / ls_max * 100)
         ls_color = "#43a047" if ls <= 3 else ("#ef6c00" if ls <= 6 else "#e53935")
@@ -872,10 +868,8 @@ if predict_btn:
 
         st.markdown("</div>", unsafe_allow_html=True)  # close section-card
 
-    # ── Kolom kanan: Hasil Prediksi ──
+    # ── Kolom kanan: Hasil Prediksi (LANGSUNG TAMPIL, TANPA SECTION-CARD KOSONG) ──
     with col_result:
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-
         # Hasil Prediksi Model XGBoost
         st.markdown(f"""
         <div class="result-banner {color}">
@@ -885,7 +879,7 @@ if predict_btn:
         </div>
         """, unsafe_allow_html=True)
 
-        # ── BMI (dipindahkan ke bawah Hasil Prediksi) ──
+        # ── BMI ──
         bmi = weight / (height ** 2)
         bmi_cat, bmi_col, bmi_bg = bmi_category(bmi)
 
@@ -920,8 +914,6 @@ if predict_btn:
               </div>
             </div>"""
         st.markdown(rek_html, unsafe_allow_html=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
 else:
     st.markdown("""
