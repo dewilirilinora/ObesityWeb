@@ -387,6 +387,10 @@ def lifestyle_score(favc, fcvc, caec, family, faf, ch2o, calc):
 
 def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
                               calc, smoke, tue, mtrans, scc, ncp):
+    """
+    Menyusun rekomendasi secara dinamis berdasarkan logika faktor risiko gaya hidup
+    yang diinput pengguna, dikombinasikan dengan tingkat risiko hasil prediksi model.
+    """
     is_underweight = (pred_label == "Insufficient_Weight")
     is_normal = (pred_label == "Normal_Weight")
     is_overweight_or_obese = pred_label in [
@@ -397,6 +401,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
 
     neg, pos = [], []
 
+    # 1) Konsumsi makanan tinggi kalori/lemak (FAVC)
     if favc == "yes" and not is_underweight:
         neg.append((
             "🍔", "Kurangi Makanan Tinggi Kalori dan Lemak",
@@ -417,6 +422,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "makanan yang lebih sehat ini."
         ))
 
+    # 2) Frekuensi konsumsi sayur (FCVC)
     if fcvc < 2:
         neg.append((
             "🥦", "Tambah Konsumsi Sayur dan Buah",
@@ -430,6 +436,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "tinggi serat ini untuk menjaga kesehatan pencernaan dan berat badan."
         ))
 
+    # 3) Kebiasaan ngemil (CAEC)
     if caec in ["Frequently", "Always"] and not is_underweight:
         neg.append((
             "🍪", "Kurangi Frekuensi Ngemil di Luar Jam Makan",
@@ -449,6 +456,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "kebiasaan ini agar asupan kalori harian tetap terjaga."
         ))
 
+    # 4) Jumlah makan utama (NCP)
     if is_underweight and ncp < 3:
         neg.append((
             "🍽️", "Tambah Frekuensi Makan Utama",
@@ -456,6 +464,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "3 kali makan utama disertai 1-2 kali selingan bergizi untuk membantu menaikkan berat badan."
         ))
 
+    # 5) Aktivitas fisik (FAF)
     if faf < 1.5 and not is_underweight:
         neg.append((
             "🏃", "Tingkatkan Frekuensi Aktivitas Fisik",
@@ -476,6 +485,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "variasikan jenis olahraga agar tetap konsisten dalam jangka panjang."
         ))
 
+    # 6) Konsumsi air putih (CH2O)
     if ch2o < 2:
         neg.append((
             "💧", "Tingkatkan Konsumsi Air Putih",
@@ -489,6 +499,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "metabolisme dan fungsi tubuh secara keseluruhan."
         ))
 
+    # 7) Konsumsi alkohol (CALC)
     if calc in ["Frequently", "Always"]:
         neg.append((
             "🍷", "Batasi Konsumsi Alkohol",
@@ -503,6 +514,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "membantu menjaga berat badan dan kesehatan hati."
         ))
 
+    # 8) Merokok (SMOKE)
     if smoke == "yes":
         neg.append((
             "🚭", "Hentikan Kebiasaan Merokok",
@@ -516,6 +528,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "untuk menjaga kesehatan jantung dan paru-paru."
         ))
 
+    # 9) Waktu penggunaan perangkat teknologi (TUE)
     if tue > 1.0 and not is_underweight:
         neg.append((
             "📵", "Kurangi Waktu Duduk di Depan Layar",
@@ -529,6 +542,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "waktu duduk pasif tidak berlebihan."
         ))
 
+    # 10) Moda transportasi (MTRANS)
     if mtrans in ["Automobile", "Motorbike"] and not is_underweight:
         neg.append((
             "🚶", "Gunakan Transportasi Aktif Sesekali",
@@ -542,6 +556,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "membantu menambah aktivitas fisik secara alami, pertahankan."
         ))
 
+    # 11) Monitoring kalori (SCC)
     if scc == "no" and is_overweight_or_obese:
         neg.append((
             "📋", "Mulai Pantau Asupan Kalori Harian",
@@ -555,6 +570,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "kebiasaan ini untuk membantu menjaga berat badan tetap terkontrol."
         ))
 
+    # 12) Riwayat keluarga
     if family == "yes":
         neg.append((
             "🧬", "Perhatikan Riwayat Keluarga",
@@ -562,6 +578,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "pemeriksaan kesehatan berkala (tekanan darah, gula darah, kolesterol) sebagai langkah pencegahan dini."
         ))
 
+    # 13) Rekomendasi konsultasi medis untuk obesitas tingkat lanjut
     if is_severe_obese:
         neg.insert(0, (
             "🏥", "Konsultasikan dengan Tenaga Medis",
@@ -570,6 +587,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "aman dan terpantau secara medis."
         ))
 
+    # 14) Prioritas khusus underweight
     if is_underweight:
         neg.insert(0, (
             "🍚", "Tingkatkan Asupan Kalori Secara Sehat",
@@ -578,6 +596,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
             "untuk mencapai berat badan ideal secara bertahap dan sehat."
         ))
 
+    # 15) Jika tidak ada faktor risiko
     if len(neg) == 0 and len(pos) == 0:
         pos.append((
             "✅", "Pertahankan Pola Hidup Sehat",
@@ -638,7 +657,7 @@ if not model_loaded:
 
 
 # ──────────────────────────────────────────────────────────────
-# INPUT DATA — diatur menjadi 2 kolom rapi
+# INPUT DATA — 2 KOLOM RAPI
 # ──────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="section-card">
@@ -708,7 +727,7 @@ with st.form("form_input"):
                                    "Motorbike": "Motor", "Bike": "Sepeda"
                                }[x])
         
-        # Skala & Frekuensi
+        # Skala & Frekuensi (Slider)
         st.markdown('<div class="input-group-title" style="margin-top:20px;">📏 Skala & Frekuensi</div>', unsafe_allow_html=True)
         
         fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
@@ -717,14 +736,14 @@ with st.form("form_input"):
         faf = st.slider("Aktivitas Fisik/Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
         tue = st.slider("Layar per Hari (TUE)", 0.0, 2.0, 1.0, 0.5)
 
-    # Tombol Submit (full width)
+    # Tombol Submit
     predict_btn = st.form_submit_button("🔬 Analisis Risiko Obesitas", use_container_width=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────────────
-# HASIL — tampil setelah tombol ditekan
+# HASIL — 2 KOLOM SEIMBANG
 # ──────────────────────────────────────────────────────────────
 if predict_btn:
     input_df = pd.DataFrame([{
@@ -813,7 +832,7 @@ if predict_btn:
         </div>
         """, unsafe_allow_html=True)
 
-        # Ringkasan input dalam 2x2 grid
+        # Ringkasan input
         st.markdown('<div class="divider-label"><span>Ringkasan Input</span></div>', unsafe_allow_html=True)
 
         col_a, col_b = st.columns(2)
