@@ -758,11 +758,11 @@ if predict_btn:
 
     col_eval, col_result = st.columns([1, 1], gap="large")
 
-    # ── Kolom kiri: Laporan Evaluasi Kesehatan ──
+    # ── Kolom kiri: Laporan Hasil Analisis ──
     with col_eval:
         st.markdown("""
         <div class="section-card">
-          <p class="section-title">📊 Laporan Evaluasi Kesehatan</p>
+          <p class="section-title">📊 Laporan Hasil Analisis</p>
           <p class="section-subtitle">Ringkasan kondisi fisik dan indikator gaya hidup</p>
         """, unsafe_allow_html=True)
 
@@ -899,7 +899,7 @@ if predict_btn:
         """, unsafe_allow_html=True)
 
         # Rekomendasi (dinamis sesuai logika faktor risiko)
-        st.markdown('<div class="divider-label"><span>Kesimpulan Klinis & Rekomendasi</span></div>',
+        st.markdown('<div class="divider-label"><span>Interpretasi Hasil Prediksi</span></div>',
                     unsafe_allow_html=True)
         rek_html = ""
         for icon, head, body in reks:
