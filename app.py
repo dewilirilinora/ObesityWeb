@@ -315,16 +315,16 @@ CLASS_INFO = {
         "label": "Berat Badan Normal",
         "color": "green",
         "bar_color": "#43a047",
-        "desc": "Selamat! Berat badanmu berada dalam kisaran normal. Pertahankan pola hidup sehat yang sudah kamu jalani."
+        "desc": "Berat badanmu berada dalam kisaran normal."
     },
     "Overweight_Level_I": {
-        "label": "Kelebihan Berat Badan Tk. I",
+        "label": "Kelebihan Berat Badan Tingkat I",
         "color": "orange",
         "bar_color": "#ef6c00",
-        "desc": "Berat badanmu sedikit di atas normal. Perubahan kecil pada pola makan dan aktivitas fisik sudah cukup efektif."
+        "desc": "Berat badanmu sedikit di atas normal. Diperlukan perubahan gaya hidup yang lebih terstruktur."
     },
     "Overweight_Level_II": {
-        "label": "Kelebihan Berat Badan Tk. II",
+        "label": "Kelebihan Berat Badan Tingkat II",
         "color": "orange",
         "bar_color": "#e64a19",
         "desc": "Berat badanmu berada di tingkat kelebihan yang lebih signifikan. Diperlukan perubahan gaya hidup yang lebih terstruktur."
@@ -345,7 +345,7 @@ CLASS_INFO = {
         "label": "Obesitas Tipe III (Morbid)",
         "color": "darkred",
         "bar_color": "#b71c1c",
-        "desc": "Kategori obesitas tingkat III (morbid obesity). Kondisi ini memerlukan penanganan medis segera dan komprehensif."
+        "desc": "Kategori obesitas tingkat III. Kondisi ini memerlukan penanganan medis segera dan komprehensif."
     },
 }
 
