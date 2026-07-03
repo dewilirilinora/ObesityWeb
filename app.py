@@ -667,7 +667,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 with st.form("form_input"):
-    # ── Baris 1: input selectbox / number (bukan slider) ──
+    # ── Baris 1: input selectbox / number ──
     col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
@@ -692,12 +692,9 @@ with st.form("form_input"):
                                  "no": "Tidak", "Sometimes": "Kadang-kadang",
                                  "Frequently": "Sering", "Always": "Selalu"
                              }[x])
-        calc = st.selectbox("Konsumsi Alkohol (CALC)",
-                             ["no", "Sometimes", "Frequently", "Always"],
-                             format_func=lambda x: {
-                                 "no": "Tidak", "Sometimes": "Kadang-kadang",
-                                 "Frequently": "Sering", "Always": "Selalu"
-                             }[x])
+        # Slider untuk Pola Makan
+        fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
+        ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
 
     with col3:
         st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
@@ -713,22 +710,15 @@ with st.form("form_input"):
                                    "Automobile": "Mobil", "Walking": "Jalan Kaki",
                                    "Motorbike": "Motor", "Bike": "Sepeda"
                                }[x])
-
-    # ── Baris 2: seluruh slider dikumpulkan berjajar rapi dalam satu bagian ──
-    st.markdown(
-        '<div class="divider-label"><span>Skala &amp; Frekuensi (geser sesuai kebiasaanmu)</span></div>',
-        unsafe_allow_html=True
-    )
-    s1, s2, s3, s4, s5 = st.columns(5, gap="medium")
-    with s1:
-        fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
-    with s2:
-        ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
-    with s3:
+        # Slider untuk Gaya Hidup
+        calc = st.selectbox("Konsumsi Alkohol (CALC)",
+                             ["no", "Sometimes", "Frequently", "Always"],
+                             format_func=lambda x: {
+                                 "no": "Tidak", "Sometimes": "Kadang-kadang",
+                                 "Frequently": "Sering", "Always": "Selalu"
+                             }[x])
         ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)
-    with s4:
         faf = st.slider("Aktivitas Fisik/Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
-    with s5:
         tue = st.slider("Layar per Hari, Jam (TUE)", 0.0, 2.0, 1.0, 0.5)
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -827,6 +817,36 @@ if predict_btn:
         </div>
         """, unsafe_allow_html=True)
 
+        # ── Distribusi Probabilitas Semua Kelas (dipindahkan ke kolom kiri) ──
+        st.markdown('<div class="divider-label"><span>Distribusi Probabilitas Semua Kelas</span></div>',
+                    unsafe_allow_html=True)
+
+        proba_df = pd.DataFrame({
+            "Kategori": le.classes_,
+            "Probabilitas (%)": (pred_proba * 100).round(2)
+        }).sort_values("Probabilitas (%)", ascending=False)
+
+        for _, row in proba_df.iterrows():
+            pct = row["Probabilitas (%)"]
+            is_pred = row["Kategori"] == pred_label
+            bar_w = pct
+            bc = bar_color if is_pred else "#ddd"
+            tc = "#1a1a2e" if is_pred else "#999"
+            fw = "700" if is_pred else "400"
+            st.markdown(f"""
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;
+                          font-size:0.78rem;margin-bottom:3px;">
+                <span style="color:{tc};font-weight:{fw};">{row['Kategori'].replace('_',' ')}</span>
+                <span style="color:{tc};font-weight:{fw};">{pct:.1f}%</span>
+              </div>
+              <div class="confidence-bar-outer">
+                <div class="confidence-bar-inner"
+                     style="width:{bar_w:.1f}%;background:{bc};"></div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
         # Ringkasan input
         st.markdown('<div class="divider-label"><span>Ringkasan Input</span></div>', unsafe_allow_html=True)
 
@@ -879,36 +899,6 @@ if predict_btn:
           <div class="rb-desc">{desc_text}</div>
         </div>
         """, unsafe_allow_html=True)
-
-        # Distribusi probabilitas semua kelas
-        st.markdown('<div class="divider-label"><span>Distribusi Probabilitas Semua Kelas</span></div>',
-                    unsafe_allow_html=True)
-
-        proba_df = pd.DataFrame({
-            "Kategori": le.classes_,
-            "Probabilitas (%)": (pred_proba * 100).round(2)
-        }).sort_values("Probabilitas (%)", ascending=False)
-
-        for _, row in proba_df.iterrows():
-            pct = row["Probabilitas (%)"]
-            is_pred = row["Kategori"] == pred_label
-            bar_w = pct
-            bc = bar_color if is_pred else "#ddd"
-            tc = "#1a1a2e" if is_pred else "#999"
-            fw = "700" if is_pred else "400"
-            st.markdown(f"""
-            <div style="margin-bottom:8px;">
-              <div style="display:flex;justify-content:space-between;
-                          font-size:0.78rem;margin-bottom:3px;">
-                <span style="color:{tc};font-weight:{fw};">{row['Kategori'].replace('_',' ')}</span>
-                <span style="color:{tc};font-weight:{fw};">{pct:.1f}%</span>
-              </div>
-              <div class="confidence-bar-outer">
-                <div class="confidence-bar-inner"
-                     style="width:{bar_w:.1f}%;background:{bc};"></div>
-              </div>
-            </div>
-            """, unsafe_allow_html=True)
 
         # Rekomendasi (dinamis sesuai logika faktor risiko)
         st.markdown('<div class="divider-label"><span>Kesimpulan Klinis & Rekomendasi</span></div>',
