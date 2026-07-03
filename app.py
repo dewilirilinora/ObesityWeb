@@ -275,6 +275,11 @@ div[data-testid="stButton"] button:hover { opacity: 0.88 !important; }
     color: #000
 }
 
+/* ── Judul Hasil Prediksi Model XGBoost warna hitam ── */
+.result-banner .rb-label {
+    color: #000000 !important;
+}
+
 /* Footer */
 .footer {
     text-align: center; padding: 28px 0 10px;
@@ -767,28 +772,7 @@ if predict_btn:
           <p class="section-subtitle">Ringkasan kondisi fisik dan indikator gaya hidup</p>
         """, unsafe_allow_html=True)
 
-        # BMI
-        bmi = weight / (height ** 2)
-        bmi_cat, bmi_col, bmi_bg = bmi_category(bmi)
-
-        st.markdown(f"""
-        <div class="bmi-wrap">
-          <div class="bmi-row">
-            <div>
-              <div style="font-size:0.75rem;color:#999;text-transform:uppercase;
-                          letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">
-                Indeks Massa Tubuh (BMI)
-              </div>
-              <div class="bmi-num">{bmi:.1f} <span style="font-size:1rem;color:#aaa;">kg/m²</span></div>
-            </div>
-            <div class="bmi-tag" style="background:{bmi_bg};color:{bmi_col};">
-              {bmi_cat}
-            </div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Lifestyle score
+        # Lifestyle score (BMI sudah dipindahkan ke kolom kanan)
         ls, ls_max = lifestyle_score(favc, fcvc, caec, family, faf, ch2o, calc)
         ls_pct = int(ls / ls_max * 100)
         ls_color = "#43a047" if ls <= 3 else ("#ef6c00" if ls <= 6 else "#e53935")
@@ -817,7 +801,7 @@ if predict_btn:
         </div>
         """, unsafe_allow_html=True)
 
-        # ── Distribusi Probabilitas Semua Kelas (dipindahkan ke kolom kiri) ──
+        # ── Distribusi Probabilitas Semua Kelas ──
         st.markdown('<div class="divider-label"><span>Distribusi Probabilitas Semua Kelas</span></div>',
                     unsafe_allow_html=True)
 
@@ -892,11 +876,33 @@ if predict_btn:
     with col_result:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
 
+        # Hasil Prediksi Model XGBoost
         st.markdown(f"""
         <div class="result-banner {color}">
           <div class="rb-label">Hasil Prediksi Model XGBoost</div>
           <div class="rb-title">{label_text}</div>
           <div class="rb-desc">{desc_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ── BMI (dipindahkan ke bawah Hasil Prediksi) ──
+        bmi = weight / (height ** 2)
+        bmi_cat, bmi_col, bmi_bg = bmi_category(bmi)
+
+        st.markdown(f"""
+        <div class="bmi-wrap">
+          <div class="bmi-row">
+            <div>
+              <div style="font-size:0.75rem;color:#999;text-transform:uppercase;
+                          letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">
+                Indeks Massa Tubuh (BMI)
+              </div>
+              <div class="bmi-num">{bmi:.1f} <span style="font-size:1rem;color:#aaa;">kg/m²</span></div>
+            </div>
+            <div class="bmi-tag" style="background:{bmi_bg};color:{bmi_col};">
+              {bmi_cat}
+            </div>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
