@@ -385,7 +385,6 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
       - Untuk kategori Insufficient_Weight, logika sebagian dibalik karena tujuan
         utamanya adalah menaikkan berat badan secara sehat, bukan menurunkannya.
     """
-    reks = []
     is_underweight = (pred_label == "Insufficient_Weight")
     is_normal = (pred_label == "Normal_Weight")
     is_overweight_or_obese = pred_label in [
@@ -394,132 +393,191 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
     ]
     is_severe_obese = pred_label in ["Obesity_Type_II", "Obesity_Type_III"]
 
-    # 1) Konsumsi makanan tinggi kalori/lemak (FAVC) -> KURANGI jika bukan underweight
+    # Dua kelompok terpisah: "neg" = faktor risiko yang perlu diperbaiki (selalu
+    # diprioritaskan tampil lebih dulu secara utuh), "pos" = afirmasi kebiasaan baik
+    # yang sudah diterapkan (hanya mengisi slot sisa apabila faktor negatif sedikit).
+    neg, pos = [], []
+
+    # 1) Konsumsi makanan tinggi kalori/lemak (FAVC)
     if favc == "yes" and not is_underweight:
-        reks.append((
+        neg.append((
             "🍔", "Kurangi Makanan Tinggi Kalori dan Lemak",
             "Kamu tercatat sering mengonsumsi makanan tinggi kalori. Kurangi porsi "
             "gorengan, fast food, dan makanan berlemak jenuh secara bertahap, lalu "
             "gantikan dengan protein rendah lemak, sayur, dan karbohidrat kompleks."
         ))
     elif favc == "yes" and is_underweight:
-        reks.append((
+        pos.append((
             "🥑", "Pilih Sumber Kalori yang Sehat",
             "Karena berat badanmu di bawah normal, pertahankan asupan kalori namun "
             "utamakan sumber yang sehat seperti alpukat, kacang-kacangan, dan minyak zaitun."
         ))
+    elif favc == "no":
+        pos.append((
+            "🥗", "Pola Makan Rendah Kalori Sudah Baik",
+            "Kamu jarang mengonsumsi makanan tinggi kalori. Pertahankan kebiasaan memilih "
+            "makanan yang lebih sehat ini."
+        ))
 
-    # 2) Frekuensi konsumsi sayur (FCVC) -> TAMBAH jika rendah
+    # 2) Frekuensi konsumsi sayur (FCVC)
     if fcvc < 2:
-        reks.append((
+        neg.append((
             "🥦", "Tambah Konsumsi Sayur dan Buah",
             "Frekuensi konsumsi sayurmu masih tergolong rendah. Tambahkan porsi sayur "
             "pada setiap makan utama untuk memenuhi kebutuhan serat, vitamin, dan mineral harian."
         ))
+    elif fcvc >= 2.5:
+        pos.append((
+            "🥬", "Konsumsi Sayur Sudah Sangat Baik",
+            "Frekuensi konsumsi sayur dan buahmu sudah tinggi. Pertahankan pola makan "
+            "tinggi serat ini untuk menjaga kesehatan pencernaan dan berat badan."
+        ))
 
-    # 3) Kebiasaan ngemil (CAEC) -> KURANGI jika sering, kecuali underweight
+    # 3) Kebiasaan ngemil (CAEC)
     if caec in ["Frequently", "Always"] and not is_underweight:
-        reks.append((
+        neg.append((
             "🍪", "Kurangi Frekuensi Ngemil di Luar Jam Makan",
             "Kebiasaan ngemil di luar waktu makan utama tergolong sering. Ganti camilan "
             "tinggi gula/garam dengan pilihan lebih sehat seperti buah potong atau kacang tanpa garam."
         ))
     elif caec in ["Frequently", "Always"] and is_underweight:
-        reks.append((
+        pos.append((
             "🥜", "Jadikan Camilan Sebagai Tambahan Kalori Sehat",
             "Kebiasaan ngemil dapat dimanfaatkan untuk menambah asupan kalori harian secara "
             "sehat, misalnya dengan kacang-kacangan, granola, atau susu tinggi protein."
         ))
+    elif caec in ["no", "Sometimes"]:
+        pos.append((
+            "🍎", "Kebiasaan Ngemil Sudah Terkendali",
+            "Frekuensi ngemil di luar jam makan utama tergolong terkendali. Pertahankan "
+            "kebiasaan ini agar asupan kalori harian tetap terjaga."
+        ))
 
-    # 4) Jumlah makan utama (NCP) -> sesuaikan untuk underweight
+    # 4) Jumlah makan utama (NCP) -> hanya relevan untuk underweight
     if is_underweight and ncp < 3:
-        reks.append((
+        neg.append((
             "🍽️", "Tambah Frekuensi Makan Utama",
             "Jumlah makan utamamu masih kurang dari 3 kali sehari. Tambahkan menjadi "
             "3 kali makan utama disertai 1-2 kali selingan bergizi untuk membantu menaikkan berat badan."
         ))
 
-    # 5) Aktivitas fisik (FAF) -> TAMBAH jika rendah, kecuali underweight cukup
+    # 5) Aktivitas fisik (FAF)
     if faf < 1.5 and not is_underweight:
-        reks.append((
+        neg.append((
             "🏃", "Tingkatkan Frekuensi Aktivitas Fisik",
             f"Frekuensi aktivitas fisikmu saat ini sekitar {faf:.1f} kali per minggu, tergolong "
             "rendah. Usahakan berolahraga minimal 3-5 kali per minggu selama 30 menit, seperti "
             "jalan cepat, bersepeda, atau latihan kekuatan ringan."
         ))
     elif faf < 1.0 and is_underweight:
-        reks.append((
+        neg.append((
             "💪", "Tambahkan Latihan Kekuatan (Bukan Kardio Berlebihan)",
             "Untuk menaikkan berat badan secara sehat, fokuskan aktivitas fisik pada latihan "
             "kekuatan (strength training) guna membentuk massa otot, bukan aktivitas kardio yang berlebihan."
         ))
     elif faf >= 2.5:
-        reks.append((
+        pos.append((
             "✅", "Pertahankan Rutinitas Aktivitas Fisik",
             "Frekuensi aktivitas fisikmu sudah cukup baik. Pertahankan rutinitas ini dan "
             "variasikan jenis olahraga agar tetap konsisten dalam jangka panjang."
         ))
 
-    # 6) Konsumsi air putih (CH2O) -> TAMBAH jika kurang dari 2 liter
+    # 6) Konsumsi air putih (CH2O)
     if ch2o < 2:
-        reks.append((
+        neg.append((
             "💧", "Tingkatkan Konsumsi Air Putih",
             "Konsumsi air putihmu saat ini di bawah 2 liter per hari. Usahakan minum minimal "
             "2 liter (setara 8 gelas) air putih setiap hari untuk menjaga metabolisme tubuh."
         ))
+    elif ch2o >= 2.5:
+        pos.append((
+            "🚰", "Konsumsi Air Putih Sudah Optimal",
+            "Asupan air putih harianmu sudah baik. Pertahankan kebiasaan ini untuk menjaga "
+            "metabolisme dan fungsi tubuh secara keseluruhan."
+        ))
 
-    # 7) Konsumsi alkohol (CALC) -> KURANGI jika sering
+    # 7) Konsumsi alkohol (CALC)
     if calc in ["Frequently", "Always"]:
-        reks.append((
+        neg.append((
             "🍷", "Batasi Konsumsi Alkohol",
             "Frekuensi konsumsi alkoholmu tergolong sering. Alkohol menyumbang kalori kosong "
             "yang tinggi, sehingga membatasi konsumsinya dapat membantu mengontrol berat badan "
             "dan menjaga kesehatan hati."
         ))
+    elif calc == "no":
+        pos.append((
+            "🚫", "Tidak Mengonsumsi Alkohol",
+            "Kamu tidak mengonsumsi alkohol. Pertahankan kebiasaan baik ini karena turut "
+            "membantu menjaga berat badan dan kesehatan hati."
+        ))
 
-    # 8) Merokok (SMOKE) -> hentikan
+    # 8) Merokok (SMOKE)
     if smoke == "yes":
-        reks.append((
+        neg.append((
             "🚭", "Hentikan Kebiasaan Merokok",
             "Merokok tidak berkontribusi langsung terhadap berat badan, namun meningkatkan "
             "risiko penyakit kardiovaskular yang dapat diperparah oleh kondisi berat badan berlebih."
         ))
+    else:
+        pos.append((
+            "🌿", "Tidak Merokok, Pertahankan",
+            "Kamu tidak memiliki kebiasaan merokok. Pertahankan gaya hidup bebas rokok ini "
+            "untuk menjaga kesehatan jantung dan paru-paru."
+        ))
 
-    # 9) Waktu penggunaan perangkat teknologi (TUE) -> KURANGI jika tinggi
+    # 9) Waktu penggunaan perangkat teknologi (TUE)
     if tue > 1.0 and not is_underweight:
-        reks.append((
+        neg.append((
             "📵", "Kurangi Waktu Duduk di Depan Layar",
             "Durasi penggunaan perangkat teknologimu tergolong tinggi. Selingi dengan bergerak "
             "aktif setiap 30-60 menit untuk mengurangi perilaku sedentari (banyak duduk)."
         ))
+    elif tue <= 1.0:
+        pos.append((
+            "⏱️", "Durasi Waktu Layar Sudah Terkendali",
+            "Waktu penggunaan perangkat teknologimu tergolong wajar. Pertahankan agar "
+            "waktu duduk pasif tidak berlebihan."
+        ))
 
-    # 10) Moda transportasi (MTRANS) -> anjurkan transportasi aktif jika pasif
+    # 10) Moda transportasi (MTRANS)
     if mtrans in ["Automobile", "Motorbike"] and not is_underweight:
-        reks.append((
+        neg.append((
             "🚶", "Gunakan Transportasi Aktif Sesekali",
             "Kamu sehari-hari menggunakan kendaraan bermotor. Cobalah berjalan kaki atau "
             "bersepeda untuk jarak dekat guna menambah aktivitas fisik harian secara alami."
         ))
+    elif mtrans in ["Walking", "Bike"]:
+        pos.append((
+            "🚴", "Sudah Menerapkan Transportasi Aktif",
+            "Kamu sudah menggunakan moda transportasi aktif sehari-hari. Kebiasaan ini "
+            "membantu menambah aktivitas fisik secara alami, pertahankan."
+        ))
 
-    # 11) Monitoring kalori (SCC) -> anjurkan mulai memantau jika overweight/obesitas dan belum memantau
+    # 11) Monitoring kalori (SCC)
     if scc == "no" and is_overweight_or_obese:
-        reks.append((
+        neg.append((
             "📋", "Mulai Pantau Asupan Kalori Harian",
             "Kamu belum memiliki kebiasaan memantau asupan kalori. Mulailah mencatat makanan "
             "harian menggunakan aplikasi food diary untuk membantu mengontrol jumlah kalori yang masuk."
         ))
+    elif scc == "yes":
+        pos.append((
+            "📈", "Sudah Memantau Asupan Kalori",
+            "Kamu sudah memiliki kebiasaan memantau asupan kalori harian. Pertahankan "
+            "kebiasaan ini untuk membantu menjaga berat badan tetap terkontrol."
+        ))
 
-    # 12) Riwayat keluarga -> edukasi tambahan
+    # 12) Riwayat keluarga -> edukasi tambahan (dikelompokkan sebagai faktor risiko)
     if family == "yes":
-        reks.append((
+        neg.append((
             "🧬", "Perhatikan Riwayat Keluarga",
             "Kamu memiliki riwayat keluarga dengan kondisi overweight/obesitas. Lakukan "
             "pemeriksaan kesehatan berkala (tekanan darah, gula darah, kolesterol) sebagai langkah pencegahan dini."
         ))
 
-    # 13) Rekomendasi konsultasi medis untuk obesitas tingkat lanjut
+    # 13) Rekomendasi konsultasi medis untuk obesitas tingkat lanjut -> prioritas utama
     if is_severe_obese:
-        reks.insert(0, (
+        neg.insert(0, (
             "🏥", "Konsultasikan dengan Tenaga Medis",
             "Dengan kategori obesitas tingkat lanjut, sangat dianjurkan untuk berkonsultasi "
             "dengan dokter atau ahli gizi guna menyusun program penurunan berat badan yang "
@@ -528,30 +586,38 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
 
     # 14) Prioritas khusus underweight di posisi teratas
     if is_underweight:
-        reks.insert(0, (
+        neg.insert(0, (
             "🍚", "Tingkatkan Asupan Kalori Secara Sehat",
             "Berat badanmu berada di bawah normal. Tambahkan porsi makan dengan sumber kalori "
             "padat gizi seperti kacang-kacangan, alpukat, whole grains, dan protein tanpa lemak "
             "untuk mencapai berat badan ideal secara bertahap dan sehat."
         ))
 
-    # 15) Jika tidak ada faktor risiko yang terdeteksi sama sekali (kondisi ideal)
-    if len(reks) == 0:
-        reks.append((
+    # 15) Jika sama sekali tidak ada faktor risiko maupun afirmasi yang terdeteksi
+    if len(neg) == 0 and len(pos) == 0:
+        pos.append((
             "✅", "Pertahankan Pola Hidup Sehat",
             "Tidak ditemukan faktor risiko gaya hidup yang signifikan dari data yang kamu "
             "masukkan. Pertahankan pola makan seimbang, aktivitas fisik rutin, dan waktu "
             "istirahat yang cukup."
         ))
-    elif is_normal:
-        reks.append((
+    if is_normal:
+        pos.append((
             "🎯", "Jaga Konsistensi",
             "Berat badanmu sudah berada dalam kategori normal. Jaga konsistensi pola makan "
             "dan aktivitas fisik yang sudah baik agar tetap berada pada kategori ini."
         ))
 
-    # Batasi maksimal 6 rekomendasi agar tampilan tetap ringkas dan tidak menumpuk
-    return reks[:6]
+    # Faktor risiko (negatif) selalu diprioritaskan tampil lebih dulu secara utuh.
+    # Afirmasi (positif) hanya ditambahkan untuk mengisi slot sisa apabila jumlah
+    # faktor risiko yang terdeteksi sedikit, sehingga daftar tidak didominasi hal
+    # yang sudah baik ketika masih banyak hal yang justru perlu diperbaiki.
+    MAX_ITEMS = 6
+    combined = neg[:MAX_ITEMS]
+    if len(combined) < MAX_ITEMS:
+        combined += pos[:MAX_ITEMS - len(combined)]
+
+    return combined
 
 
 # ──────────────────────────────────────────────────────────────
@@ -601,6 +667,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 with st.form("form_input"):
+    # ── Baris 1: input selectbox / number (bukan slider) ──
     col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
@@ -618,8 +685,6 @@ with st.form("form_input"):
         st.markdown('<div class="input-group-title">Pola Makan</div>', unsafe_allow_html=True)
         favc = st.selectbox("Konsumsi Makanan Tinggi Kalori (FAVC)",
                              ["yes", "no"], format_func=lambda x: "Ya" if x == "yes" else "Tidak")
-        fcvc = st.slider("Frekuensi Konsumsi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
-        ncp  = st.slider("Jumlah Makan Utama per Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
         caec = st.selectbox("Konsumsi Makanan Ringan (CAEC)",
                              ["no", "Sometimes", "Frequently", "Always"],
                              index=1,
@@ -636,13 +701,10 @@ with st.form("form_input"):
 
     with col3:
         st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
-        ch2o = st.slider("Konsumsi Air Harian (liter) (CH2O)", 1.0, 3.0, 2.0, 0.5)
         smoke = st.selectbox("Merokok (SMOKE)",
                               ["no", "yes"], format_func=lambda x: "Tidak" if x == "no" else "Ya")
         scc  = st.selectbox("Monitoring Konsumsi Kalori (SCC)",
                              ["no", "yes"], format_func=lambda x: "Tidak" if x == "no" else "Ya")
-        faf  = st.slider("Frekuensi Aktivitas Fisik per Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
-        tue  = st.slider("Durasi Penggunaan Perangkat Teknologi (jam/hari) (TUE)", 0.0, 2.0, 1.0, 0.5)
         mtrans = st.selectbox("Transportasi Harian (MTRANS)",
                                ["Public_Transportation", "Automobile", "Walking",
                                 "Motorbike", "Bike"],
@@ -651,6 +713,23 @@ with st.form("form_input"):
                                    "Automobile": "Mobil", "Walking": "Jalan Kaki",
                                    "Motorbike": "Motor", "Bike": "Sepeda"
                                }[x])
+
+    # ── Baris 2: seluruh slider dikumpulkan berjajar rapi dalam satu bagian ──
+    st.markdown(
+        '<div class="divider-label"><span>Skala &amp; Frekuensi (geser sesuai kebiasaanmu)</span></div>',
+        unsafe_allow_html=True
+    )
+    s1, s2, s3, s4, s5 = st.columns(5, gap="medium")
+    with s1:
+        fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
+    with s2:
+        ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
+    with s3:
+        ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)
+    with s4:
+        faf = st.slider("Aktivitas Fisik/Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
+    with s5:
+        tue = st.slider("Layar per Hari, Jam (TUE)", 0.0, 2.0, 1.0, 0.5)
 
     st.markdown("<br>", unsafe_allow_html=True)
     predict_btn = st.form_submit_button(" Analisis Risiko Obesitas", use_container_width=True)
@@ -791,11 +870,7 @@ if predict_btn:
 
     # ── Kolom kanan: Hasil Prediksi ──
     with col_result:
-        st.markdown("""
-        <div class="section-card">
-          <p class="section-title">🤖 Hasil Prediksi Model</p>
-          <p class="section-subtitle">Output klasifikasi XGBoost & kesimpulan klinis</p>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
 
         st.markdown(f"""
         <div class="result-banner {color}">
