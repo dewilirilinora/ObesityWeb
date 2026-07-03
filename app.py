@@ -10,7 +10,7 @@ import os
 st.set_page_config(
     page_title="Sistem Prediksi Tingkat Risiko Obesitas",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ──────────────────────────────────────────────────────────────
@@ -30,18 +30,14 @@ html, body, [class*="css"] {
     background: #f5f3ef;
 }
 
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background: #1a1a2e !important;
-    border-right: none;
-}
-[data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] .stSlider label,
-[data-testid="stSidebar"] .stNumberInput label,
-[data-testid="stSidebar"] .stRadio label {
-    color: #a8a4b8 !important;
+/* ── Semua label input (kini berada di halaman utama, bukan sidebar) ── */
+.stSelectbox label,
+.stSlider label,
+.stNumberInput label,
+.stRadio label {
+    color: #6e6e9e !important;
     font-size: 0.78rem;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
@@ -149,6 +145,16 @@ html, body, [class*="css"] {
     margin: 0 0 24px 0;
     font-weight: 400;
 }
+.input-group-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #e53935;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 4px 0 14px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f0ece5;
+}
 
 /* ── Metric cards ── */
 .metric-row {
@@ -244,6 +250,7 @@ html, body, [class*="css"] {
 }
 
 /* ── Streamlit overrides ── */
+div[data-testid="stFormSubmitButton"] button,
 div[data-testid="stButton"] button {
     background: linear-gradient(135deg, #e53935, #b71c1c) !important;
     color: #fff !important;
@@ -257,6 +264,7 @@ div[data-testid="stButton"] button {
     cursor: pointer;
     transition: opacity 0.2s;
 }
+div[data-testid="stFormSubmitButton"] button:hover,
 div[data-testid="stButton"] button:hover { opacity: 0.88 !important; }
 
 .stSelectbox > div > div,
@@ -350,18 +358,201 @@ def bmi_category(bmi):
     else:
         return "Obesitas", "#e53935", "#ffebee"
 
-def lifestyle_score(favc,fcvc, caec, family, faf, ch2o, calc):
-    
+def lifestyle_score(favc, fcvc, caec, family, faf, ch2o, calc):
     score = 0
     if favc == "yes": score += 1
     if fcvc < 2: score += 1
-    if caec in ["Sometimes","Frequently","Always"]: score += (["Sometimes","Frequently","Always"].index(caec)+1)
+    if caec in ["Sometimes", "Frequently", "Always"]:
+        score += (["Sometimes", "Frequently", "Always"].index(caec) + 1)
     if family == "yes": score += 1
     score += max(0, 2 - faf)
     if ch2o < 2: score += 1
-    if calc in ["Sometimes","Frequently","Always"]: score += 1
+    if calc in ["Sometimes", "Frequently", "Always"]: score += 1
     max_score = 10
     return min(score, max_score), max_score
+
+
+def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
+                              calc, smoke, tue, mtrans, scc, ncp):
+    """
+    Menyusun rekomendasi secara dinamis berdasarkan logika faktor risiko gaya hidup
+    yang diinput pengguna, dikombinasikan dengan tingkat risiko hasil prediksi model.
+    Aturan dasar:
+      - Faktor yang MENINGKATKAN kalori/risiko (FAVC, CAEC, CALC, TUE, kendaraan
+        bermotor) -> direkomendasikan untuk DIKURANGI.
+      - Faktor yang MEMBAKAR kalori/menurunkan risiko (FAF, transportasi aktif,
+        konsumsi air, konsumsi sayur) -> direkomendasikan untuk DITAMBAH.
+      - Untuk kategori Insufficient_Weight, logika sebagian dibalik karena tujuan
+        utamanya adalah menaikkan berat badan secara sehat, bukan menurunkannya.
+    """
+    reks = []
+    is_underweight = (pred_label == "Insufficient_Weight")
+    is_normal = (pred_label == "Normal_Weight")
+    is_overweight_or_obese = pred_label in [
+        "Overweight_Level_I", "Overweight_Level_II",
+        "Obesity_Type_I", "Obesity_Type_II", "Obesity_Type_III"
+    ]
+    is_severe_obese = pred_label in ["Obesity_Type_II", "Obesity_Type_III"]
+
+    # 1) Konsumsi makanan tinggi kalori/lemak (FAVC) -> KURANGI jika bukan underweight
+    if favc == "yes" and not is_underweight:
+        reks.append((
+            "🍔", "Kurangi Makanan Tinggi Kalori dan Lemak",
+            "Kamu tercatat sering mengonsumsi makanan tinggi kalori. Kurangi porsi "
+            "gorengan, fast food, dan makanan berlemak jenuh secara bertahap, lalu "
+            "gantikan dengan protein rendah lemak, sayur, dan karbohidrat kompleks."
+        ))
+    elif favc == "yes" and is_underweight:
+        reks.append((
+            "🥑", "Pilih Sumber Kalori yang Sehat",
+            "Karena berat badanmu di bawah normal, pertahankan asupan kalori namun "
+            "utamakan sumber yang sehat seperti alpukat, kacang-kacangan, dan minyak zaitun."
+        ))
+
+    # 2) Frekuensi konsumsi sayur (FCVC) -> TAMBAH jika rendah
+    if fcvc < 2:
+        reks.append((
+            "🥦", "Tambah Konsumsi Sayur dan Buah",
+            "Frekuensi konsumsi sayurmu masih tergolong rendah. Tambahkan porsi sayur "
+            "pada setiap makan utama untuk memenuhi kebutuhan serat, vitamin, dan mineral harian."
+        ))
+
+    # 3) Kebiasaan ngemil (CAEC) -> KURANGI jika sering, kecuali underweight
+    if caec in ["Frequently", "Always"] and not is_underweight:
+        reks.append((
+            "🍪", "Kurangi Frekuensi Ngemil di Luar Jam Makan",
+            "Kebiasaan ngemil di luar waktu makan utama tergolong sering. Ganti camilan "
+            "tinggi gula/garam dengan pilihan lebih sehat seperti buah potong atau kacang tanpa garam."
+        ))
+    elif caec in ["Frequently", "Always"] and is_underweight:
+        reks.append((
+            "🥜", "Jadikan Camilan Sebagai Tambahan Kalori Sehat",
+            "Kebiasaan ngemil dapat dimanfaatkan untuk menambah asupan kalori harian secara "
+            "sehat, misalnya dengan kacang-kacangan, granola, atau susu tinggi protein."
+        ))
+
+    # 4) Jumlah makan utama (NCP) -> sesuaikan untuk underweight
+    if is_underweight and ncp < 3:
+        reks.append((
+            "🍽️", "Tambah Frekuensi Makan Utama",
+            "Jumlah makan utamamu masih kurang dari 3 kali sehari. Tambahkan menjadi "
+            "3 kali makan utama disertai 1-2 kali selingan bergizi untuk membantu menaikkan berat badan."
+        ))
+
+    # 5) Aktivitas fisik (FAF) -> TAMBAH jika rendah, kecuali underweight cukup
+    if faf < 1.5 and not is_underweight:
+        reks.append((
+            "🏃", "Tingkatkan Frekuensi Aktivitas Fisik",
+            f"Frekuensi aktivitas fisikmu saat ini sekitar {faf:.1f} kali per minggu, tergolong "
+            "rendah. Usahakan berolahraga minimal 3-5 kali per minggu selama 30 menit, seperti "
+            "jalan cepat, bersepeda, atau latihan kekuatan ringan."
+        ))
+    elif faf < 1.0 and is_underweight:
+        reks.append((
+            "💪", "Tambahkan Latihan Kekuatan (Bukan Kardio Berlebihan)",
+            "Untuk menaikkan berat badan secara sehat, fokuskan aktivitas fisik pada latihan "
+            "kekuatan (strength training) guna membentuk massa otot, bukan aktivitas kardio yang berlebihan."
+        ))
+    elif faf >= 2.5:
+        reks.append((
+            "✅", "Pertahankan Rutinitas Aktivitas Fisik",
+            "Frekuensi aktivitas fisikmu sudah cukup baik. Pertahankan rutinitas ini dan "
+            "variasikan jenis olahraga agar tetap konsisten dalam jangka panjang."
+        ))
+
+    # 6) Konsumsi air putih (CH2O) -> TAMBAH jika kurang dari 2 liter
+    if ch2o < 2:
+        reks.append((
+            "💧", "Tingkatkan Konsumsi Air Putih",
+            "Konsumsi air putihmu saat ini di bawah 2 liter per hari. Usahakan minum minimal "
+            "2 liter (setara 8 gelas) air putih setiap hari untuk menjaga metabolisme tubuh."
+        ))
+
+    # 7) Konsumsi alkohol (CALC) -> KURANGI jika sering
+    if calc in ["Frequently", "Always"]:
+        reks.append((
+            "🍷", "Batasi Konsumsi Alkohol",
+            "Frekuensi konsumsi alkoholmu tergolong sering. Alkohol menyumbang kalori kosong "
+            "yang tinggi, sehingga membatasi konsumsinya dapat membantu mengontrol berat badan "
+            "dan menjaga kesehatan hati."
+        ))
+
+    # 8) Merokok (SMOKE) -> hentikan
+    if smoke == "yes":
+        reks.append((
+            "🚭", "Hentikan Kebiasaan Merokok",
+            "Merokok tidak berkontribusi langsung terhadap berat badan, namun meningkatkan "
+            "risiko penyakit kardiovaskular yang dapat diperparah oleh kondisi berat badan berlebih."
+        ))
+
+    # 9) Waktu penggunaan perangkat teknologi (TUE) -> KURANGI jika tinggi
+    if tue > 1.0 and not is_underweight:
+        reks.append((
+            "📵", "Kurangi Waktu Duduk di Depan Layar",
+            "Durasi penggunaan perangkat teknologimu tergolong tinggi. Selingi dengan bergerak "
+            "aktif setiap 30-60 menit untuk mengurangi perilaku sedentari (banyak duduk)."
+        ))
+
+    # 10) Moda transportasi (MTRANS) -> anjurkan transportasi aktif jika pasif
+    if mtrans in ["Automobile", "Motorbike"] and not is_underweight:
+        reks.append((
+            "🚶", "Gunakan Transportasi Aktif Sesekali",
+            "Kamu sehari-hari menggunakan kendaraan bermotor. Cobalah berjalan kaki atau "
+            "bersepeda untuk jarak dekat guna menambah aktivitas fisik harian secara alami."
+        ))
+
+    # 11) Monitoring kalori (SCC) -> anjurkan mulai memantau jika overweight/obesitas dan belum memantau
+    if scc == "no" and is_overweight_or_obese:
+        reks.append((
+            "📋", "Mulai Pantau Asupan Kalori Harian",
+            "Kamu belum memiliki kebiasaan memantau asupan kalori. Mulailah mencatat makanan "
+            "harian menggunakan aplikasi food diary untuk membantu mengontrol jumlah kalori yang masuk."
+        ))
+
+    # 12) Riwayat keluarga -> edukasi tambahan
+    if family == "yes":
+        reks.append((
+            "🧬", "Perhatikan Riwayat Keluarga",
+            "Kamu memiliki riwayat keluarga dengan kondisi overweight/obesitas. Lakukan "
+            "pemeriksaan kesehatan berkala (tekanan darah, gula darah, kolesterol) sebagai langkah pencegahan dini."
+        ))
+
+    # 13) Rekomendasi konsultasi medis untuk obesitas tingkat lanjut
+    if is_severe_obese:
+        reks.insert(0, (
+            "🏥", "Konsultasikan dengan Tenaga Medis",
+            "Dengan kategori obesitas tingkat lanjut, sangat dianjurkan untuk berkonsultasi "
+            "dengan dokter atau ahli gizi guna menyusun program penurunan berat badan yang "
+            "aman dan terpantau secara medis."
+        ))
+
+    # 14) Prioritas khusus underweight di posisi teratas
+    if is_underweight:
+        reks.insert(0, (
+            "🍚", "Tingkatkan Asupan Kalori Secara Sehat",
+            "Berat badanmu berada di bawah normal. Tambahkan porsi makan dengan sumber kalori "
+            "padat gizi seperti kacang-kacangan, alpukat, whole grains, dan protein tanpa lemak "
+            "untuk mencapai berat badan ideal secara bertahap dan sehat."
+        ))
+
+    # 15) Jika tidak ada faktor risiko yang terdeteksi sama sekali (kondisi ideal)
+    if len(reks) == 0:
+        reks.append((
+            "✅", "Pertahankan Pola Hidup Sehat",
+            "Tidak ditemukan faktor risiko gaya hidup yang signifikan dari data yang kamu "
+            "masukkan. Pertahankan pola makan seimbang, aktivitas fisik rutin, dan waktu "
+            "istirahat yang cukup."
+        ))
+    elif is_normal:
+        reks.append((
+            "🎯", "Jaga Konsistensi",
+            "Berat badanmu sudah berada dalam kategori normal. Jaga konsistensi pola makan "
+            "dan aktivitas fisik yang sudah baik agar tetap berada pada kategori ini."
+        ))
+
+    # Batasi maksimal 6 rekomendasi agar tampilan tetap ringkas dan tidak menumpuk
+    return reks[:6]
+
 
 # ──────────────────────────────────────────────────────────────
 # HERO HEADER
@@ -396,203 +587,215 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 if not model_loaded:
-    st.error("⚠️ File model tidak ditemukan. Pastikan `model_obesitas_xgb.joblib` dan `label_encoder.joblib` berada di folder yang sama dengan `app.py`.")
+    st.error("⚠️ File model tidak ditemukan. Pastikan `xgboost_obesity_pipeline.pkl` dan `label_encoder.pkl` berada di folder yang sama dengan `app.py`.")
     st.stop()
 
 
 # ──────────────────────────────────────────────────────────────
-# SIDEBAR — INPUT DATA
+# INPUT DATA — kini berada di halaman utama (bukan sidebar)
 # ──────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("Input Data Pengguna")
-    st.markdown("---")
+st.markdown("""
+<div class="section-card">
+  <p class="section-title">📝 Input Data Pengguna</p>
+  <p class="section-subtitle">Lengkapi data fisik, pola makan, dan gaya hidupmu di bawah ini</p>
+""", unsafe_allow_html=True)
 
-    st.markdown("Data Fisik")
-    gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
-    age    = st.number_input("Usia (tahun)", min_value=10, max_value=60, value=25)
-    height = st.number_input("Tinggi Badan (m)", min_value=1.40, max_value=2.20,
-                              value=1.68, step=0.01, format="%.2f")
-    weight = st.number_input("Berat Badan (kg)", min_value=30.0, max_value=250.0,
-                              value=70.0, step=0.5, format="%.1f")
-    family = st.selectbox("Riwayat Keluarga dengan Obesitas",
-                           ["yes", "no"], format_func=lambda x: "Ya" if x=="yes" else "Tidak")
+with st.form("form_input"):
+    col1, col2, col3 = st.columns(3, gap="large")
 
-    st.markdown("---")
-    st.markdown("Pola Makan")
-    favc = st.selectbox("Konsumsi Makanan Tinggi Kalori (FAVC)",
-                         ["yes","no"], format_func=lambda x: "Ya" if x=="yes" else "Tidak")
-    fcvc = st.slider("Frekuensi Konsumsi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
-    ncp  = st.slider("Jumlah Makan Utama per Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
-    caec = st.selectbox("Konsumsi Makanan Ringan (CAEC)",
-                         ["no","Sometimes","Frequently","Always"],
-                         index=1,
-                         format_func=lambda x: {
-                             "no":"Tidak","Sometimes":"Kadang-kadang",
-                             "Frequently":"Sering","Always":"Selalu"
-                         }[x])
+    with col1:
+        st.markdown('<div class="input-group-title">Data Fisik</div>', unsafe_allow_html=True)
+        gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
+        age    = st.number_input("Usia (tahun)", min_value=10, max_value=60, value=25)
+        height = st.number_input("Tinggi Badan (m)", min_value=1.40, max_value=2.20,
+                                  value=1.68, step=0.01, format="%.2f")
+        weight = st.number_input("Berat Badan (kg)", min_value=30.0, max_value=250.0,
+                                  value=70.0, step=0.5, format="%.1f")
+        family = st.selectbox("Riwayat Keluarga dengan Obesitas",
+                               ["yes", "no"], format_func=lambda x: "Ya" if x == "yes" else "Tidak")
 
-    st.markdown("---")
-    st.markdown("Kebiasaan & Gaya Hidup")
-    ch2o = st.slider("Konsumsi Air Harian (liter) (CH2O)", 1.0, 3.0, 2.0, 0.5)
-    smoke= st.selectbox("Merokok (SMOKE)",
-                         ["no","yes"], format_func=lambda x: "Tidak" if x=="no" else "Ya")
-    scc  = st.selectbox("Monitoring Konsumsi Kalori (SCC)",
-                         ["no","yes"], format_func=lambda x: "Tidak" if x=="no" else "Ya")
-    faf  = st.slider("Frekuensi Aktivitas Fisik per Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
-    tue  = st.slider("Durasi Penggunaan Perangkat Teknologi (jam/hari) (TUE)", 0.0, 2.0, 1.0, 0.5)
-    calc = st.selectbox("Konsumsi Alkohol (CALC)",
-                         ["no","Sometimes","Frequently","Always"],
-                         format_func=lambda x: {
-                             "no":"Tidak","Sometimes":"Kadang-kadang",
-                             "Frequently":"Sering","Always":"Selalu"
-                         }[x])
-    mtrans = st.selectbox("Transportasi Harian (MTRANS)",
-                           ["Public_Transportation","Automobile","Walking",
-                            "Motorbike","Bike"],
-                           format_func=lambda x: {
-                               "Public_Transportation":"Transportasi Umum",
-                               "Automobile":"Mobil","Walking":"Jalan Kaki",
-                               "Motorbike":"Motor","Bike":"Sepeda"
-                           }[x])
+    with col2:
+        st.markdown('<div class="input-group-title">Pola Makan</div>', unsafe_allow_html=True)
+        favc = st.selectbox("Konsumsi Makanan Tinggi Kalori (FAVC)",
+                             ["yes", "no"], format_func=lambda x: "Ya" if x == "yes" else "Tidak")
+        fcvc = st.slider("Frekuensi Konsumsi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
+        ncp  = st.slider("Jumlah Makan Utama per Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
+        caec = st.selectbox("Konsumsi Makanan Ringan (CAEC)",
+                             ["no", "Sometimes", "Frequently", "Always"],
+                             index=1,
+                             format_func=lambda x: {
+                                 "no": "Tidak", "Sometimes": "Kadang-kadang",
+                                 "Frequently": "Sering", "Always": "Selalu"
+                             }[x])
+        calc = st.selectbox("Konsumsi Alkohol (CALC)",
+                             ["no", "Sometimes", "Frequently", "Always"],
+                             format_func=lambda x: {
+                                 "no": "Tidak", "Sometimes": "Kadang-kadang",
+                                 "Frequently": "Sering", "Always": "Selalu"
+                             }[x])
 
-    st.markdown("---")
-    predict_btn = st.button(" Analisis Risiko Obesitas", use_container_width=True)
+    with col3:
+        st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
+        ch2o = st.slider("Konsumsi Air Harian (liter) (CH2O)", 1.0, 3.0, 2.0, 0.5)
+        smoke = st.selectbox("Merokok (SMOKE)",
+                              ["no", "yes"], format_func=lambda x: "Tidak" if x == "no" else "Ya")
+        scc  = st.selectbox("Monitoring Konsumsi Kalori (SCC)",
+                             ["no", "yes"], format_func=lambda x: "Tidak" if x == "no" else "Ya")
+        faf  = st.slider("Frekuensi Aktivitas Fisik per Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
+        tue  = st.slider("Durasi Penggunaan Perangkat Teknologi (jam/hari) (TUE)", 0.0, 2.0, 1.0, 0.5)
+        mtrans = st.selectbox("Transportasi Harian (MTRANS)",
+                               ["Public_Transportation", "Automobile", "Walking",
+                                "Motorbike", "Bike"],
+                               format_func=lambda x: {
+                                   "Public_Transportation": "Transportasi Umum",
+                                   "Automobile": "Mobil", "Walking": "Jalan Kaki",
+                                   "Motorbike": "Motor", "Bike": "Sepeda"
+                               }[x])
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    predict_btn = st.form_submit_button(" Analisis Risiko Obesitas", use_container_width=True)
+
+st.markdown("</div>", unsafe_allow_html=True)  # close section-card input
 
 
 # ──────────────────────────────────────────────────────────────
-# MAIN AREA — 2 kolom
+# HASIL — hanya tampil setelah tombol ditekan, di bawah form input
 # ──────────────────────────────────────────────────────────────
-col_eval, col_result = st.columns([1, 1], gap="large")
+if predict_btn:
+    input_df = pd.DataFrame([{
+        "Gender": gender, "Age": float(age), "Height": height, "Weight": weight,
+        "family_history_with_overweight": family,
+        "FAVC": favc, "FCVC": fcvc, "NCP": ncp, "CAEC": caec,
+        "SMOKE": smoke, "CH2O": ch2o, "SCC": scc,
+        "FAF": faf, "TUE": tue, "CALC": calc, "MTRANS": mtrans,
+    }])
 
-# ── Kolom kiri: Laporan Evaluasi Kesehatan ──
-with col_eval:
-    st.markdown("""
-    <div class="section-card">
-      <p class="section-title">📊 Laporan Evaluasi Kesehatan</p>
-      <p class="section-subtitle">Ringkasan kondisi fisik dan indikator gaya hidup</p>
-    """, unsafe_allow_html=True)
+    with st.spinner("Memproses prediksi..."):
+        pred_encoded = pipeline.predict(input_df)[0]
+        pred_proba   = pipeline.predict_proba(input_df)[0]
+        pred_label   = le.inverse_transform([pred_encoded])[0]
+        confidence   = pred_proba[pred_encoded] * 100
 
-    # BMI
-    bmi = weight / (height ** 2)
-    bmi_cat, bmi_col, bmi_bg = bmi_category(bmi)
+    info = CLASS_INFO.get(pred_label, {})
+    color      = info.get("color", "yellow")
+    bar_color  = info.get("bar_color", "#999")
+    label_text = info.get("label", pred_label)
+    desc_text  = info.get("desc", "")
 
-    st.markdown(f"""
-    <div class="bmi-wrap">
-      <div class="bmi-row">
-        <div>
-          <div style="font-size:0.75rem;color:#999;text-transform:uppercase;
-                      letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">
-            Indeks Massa Tubuh (BMI)
+    # Rekomendasi dihasilkan secara dinamis berdasarkan logika faktor risiko input
+    reks = generate_recommendations(
+        pred_label, favc, fcvc, caec, family, faf, ch2o,
+        calc, smoke, tue, mtrans, scc, ncp
+    )
+
+    col_eval, col_result = st.columns([1, 1], gap="large")
+
+    # ── Kolom kiri: Laporan Evaluasi Kesehatan ──
+    with col_eval:
+        st.markdown("""
+        <div class="section-card">
+          <p class="section-title">📊 Laporan Evaluasi Kesehatan</p>
+          <p class="section-subtitle">Ringkasan kondisi fisik dan indikator gaya hidup</p>
+        """, unsafe_allow_html=True)
+
+        # BMI
+        bmi = weight / (height ** 2)
+        bmi_cat, bmi_col, bmi_bg = bmi_category(bmi)
+
+        st.markdown(f"""
+        <div class="bmi-wrap">
+          <div class="bmi-row">
+            <div>
+              <div style="font-size:0.75rem;color:#999;text-transform:uppercase;
+                          letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">
+                Indeks Massa Tubuh (BMI)
+              </div>
+              <div class="bmi-num">{bmi:.1f} <span style="font-size:1rem;color:#aaa;">kg/m²</span></div>
+            </div>
+            <div class="bmi-tag" style="background:{bmi_bg};color:{bmi_col};">
+              {bmi_cat}
+            </div>
           </div>
-          <div class="bmi-num">{bmi:.1f} <span style="font-size:1rem;color:#aaa;">kg/m²</span></div>
         </div>
-        <div class="bmi-tag" style="background:{bmi_bg};color:{bmi_col};">
-          {bmi_cat}
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    # Lifestyle score
-    ls, ls_max = lifestyle_score(favc,fcvc, caec, family, faf, ch2o, calc)
-    ls_pct = int(ls / ls_max * 100)
-    ls_color = "#43a047" if ls <= 3 else ("#ef6c00" if ls <= 6 else "#e53935")
-    ls_label = "Baik" if ls <= 3 else ("Perlu Perhatian" if ls <= 6 else "Berisiko Tinggi")
+        # Lifestyle score
+        ls, ls_max = lifestyle_score(favc, fcvc, caec, family, faf, ch2o, calc)
+        ls_pct = int(ls / ls_max * 100)
+        ls_color = "#43a047" if ls <= 3 else ("#ef6c00" if ls <= 6 else "#e53935")
+        ls_label = "Baik" if ls <= 3 else ("Perlu Perhatian" if ls <= 6 else "Berisiko Tinggi")
 
-    st.markdown(f"""
-    <div class="bmi-wrap" style="margin-top:0;">
-      <div class="bmi-row">
-        <div>
-          <div style="font-size:0.75rem;color:#999;text-transform:uppercase;
-                      letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">
-            Skor Risiko Gaya Hidup
+        st.markdown(f"""
+        <div class="bmi-wrap" style="margin-top:0;">
+          <div class="bmi-row">
+            <div>
+              <div style="font-size:0.75rem;color:#999;text-transform:uppercase;
+                          letter-spacing:0.07em;font-weight:600;margin-bottom:4px;">
+                Skor Risiko Gaya Hidup
+              </div>
+              <div class="bmi-num" style="color:{ls_color};">{ls}<span style="font-size:1rem;color:#aaa;">/{ls_max}</span></div>
+            </div>
+            <div class="bmi-tag" style="background:{ls_color}22;color:{ls_color};">
+              {ls_label}
+            </div>
           </div>
-          <div class="bmi-num" style="color:{ls_color};">{ls}<span style="font-size:1rem;color:#aaa;">/{ls_max}</span></div>
-        </div>
-        <div class="bmi-tag" style="background:{ls_color}22;color:{ls_color};">
-          {ls_label}
-        </div>
-      </div>
-      <div style="margin-top:12px;">
-        <div class="confidence-bar-outer">
-          <div class="confidence-bar-inner"
-               style="width:{ls_pct}%;background:{ls_color};"></div>
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Ringkasan input
-    st.markdown('<div class="divider-label"><span>Ringkasan Input</span></div>', unsafe_allow_html=True)
-
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.markdown(f"""
-        <div class="metric-card">
-          <div class="m-icon">🧑</div>
-          <div class="m-val">{age} thn</div>
-          <div class="m-lbl">Usia</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_b:
-        st.markdown(f"""
-        <div class="metric-card">
-          <div class="m-icon">⚖️</div>
-          <div class="m-val">{weight:.1f} kg</div>
-          <div class="m-lbl">Berat Badan</div>
+          <div style="margin-top:12px;">
+            <div class="confidence-bar-outer">
+              <div class="confidence-bar-inner"
+                   style="width:{ls_pct}%;background:{ls_color};"></div>
+            </div>
+          </div>
         </div>
         """, unsafe_allow_html=True)
 
-    col_c, col_d = st.columns(2)
-    with col_c:
-        st.markdown(f"""
-        <div class="metric-card">
-          <div class="m-icon">📏</div>
-          <div class="m-val">{height:.2f} m</div>
-          <div class="m-lbl">Tinggi Badan</div>
-        </div>
+        # Ringkasan input
+        st.markdown('<div class="divider-label"><span>Ringkasan Input</span></div>', unsafe_allow_html=True)
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="m-icon">🧑</div>
+              <div class="m-val">{age} thn</div>
+              <div class="m-lbl">Usia</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_b:
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="m-icon">⚖️</div>
+              <div class="m-val">{weight:.1f} kg</div>
+              <div class="m-lbl">Berat Badan</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        col_c, col_d = st.columns(2)
+        with col_c:
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="m-icon">📏</div>
+              <div class="m-val">{height:.2f} m</div>
+              <div class="m-lbl">Tinggi Badan</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_d:
+            st.markdown(f"""
+            <div class="metric-card">
+              <div class="m-icon">🏃</div>
+              <div class="m-val">{faf:.1f}x</div>
+              <div class="m-lbl">Aktivitas/Minggu</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)  # close section-card
+
+    # ── Kolom kanan: Hasil Prediksi ──
+    with col_result:
+        st.markdown("""
+        <div class="section-card">
+          <p class="section-title">🤖 Hasil Prediksi Model</p>
+          <p class="section-subtitle">Output klasifikasi XGBoost & kesimpulan klinis</p>
         """, unsafe_allow_html=True)
-    with col_d:
-        st.markdown(f"""
-        <div class="metric-card">
-          <div class="m-icon">🏃</div>
-          <div class="m-val">{faf:.1f}x</div>
-          <div class="m-lbl">Aktivitas/Minggu</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)  # close section-card
-
-
-# ── Kolom kanan: Hasil Prediksi ──
-with col_result:
-    st.markdown("""
-    <div class="section-card">
-      <p class="section-title">🤖 Hasil Prediksi Model</p>
-      <p class="section-subtitle">Output klasifikasi XGBoost & kesimpulan klinis</p>
-    """, unsafe_allow_html=True)
-
-    if predict_btn:
-        input_df = pd.DataFrame([{
-            "Gender": gender, "Age": float(age), "Height": height, "Weight": weight,
-            "family_history_with_overweight": family,
-            "FAVC": favc, "FCVC": fcvc, "NCP": ncp, "CAEC": caec,
-            "SMOKE": smoke, "CH2O": ch2o, "SCC": scc,
-            "FAF": faf, "TUE": tue, "CALC": calc, "MTRANS": mtrans,
-        }])
-
-        with st.spinner("Memproses prediksi..."):
-            pred_encoded = pipeline.predict(input_df)[0]
-            pred_proba   = pipeline.predict_proba(input_df)[0]
-            pred_label   = le.inverse_transform([pred_encoded])[0]
-            confidence   = pred_proba[pred_encoded] * 100
-
-        info = CLASS_INFO.get(pred_label, {})
-        color      = info.get("color", "yellow")
-        bar_color  = info.get("bar_color", "#999")
-        label_text = info.get("label", pred_label)
-        desc_text  = info.get("desc", "")
-        reks       = info.get("rekomendasi", [])
 
         st.markdown(f"""
         <div class="result-banner {color}">
@@ -632,34 +835,34 @@ with col_result:
             </div>
             """, unsafe_allow_html=True)
 
-        # Rekomendasi
-        if reks:
-            st.markdown('<div class="divider-label"><span>Kesimpulan Klinis & Rekomendasi</span></div>',
-                        unsafe_allow_html=True)
-            rek_html = ""
-            for icon, head, body in reks:
-                rek_html += f"""
-                <div class="rek-item">
-                  <div class="rek-icon">{icon}</div>
-                  <div class="rek-text">
-                    <div class="rek-head">{head}</div>
-                    <div class="rek-body">{body}</div>
-                  </div>
-                </div>"""
-            st.markdown(rek_html, unsafe_allow_html=True)
+        # Rekomendasi (dinamis sesuai logika faktor risiko)
+        st.markdown('<div class="divider-label"><span>Kesimpulan Klinis & Rekomendasi</span></div>',
+                    unsafe_allow_html=True)
+        rek_html = ""
+        for icon, head, body in reks:
+            rek_html += f"""
+            <div class="rek-item">
+              <div class="rek-icon">{icon}</div>
+              <div class="rek-text">
+                <div class="rek-head">{head}</div>
+                <div class="rek-body">{body}</div>
+              </div>
+            </div>"""
+        st.markdown(rek_html, unsafe_allow_html=True)
 
-    else:
-        st.markdown("""
-        <div style="text-align:center;padding:60px 20px;color:#bbb;">
-          <div style="font-size:3.5rem;margin-bottom:16px;">🩺</div>
-          <div style="font-size:1rem;font-weight:500;color:#999;">
-            Isi data di panel kiri, lalu klik<br>
-            <strong style="color:#e53935;">Analisis Risiko Obesitas</strong>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <div class="section-card" style="text-align:center;padding:60px 20px;">
+      <div style="font-size:3.5rem;margin-bottom:16px;">🩺</div>
+      <div style="font-size:1rem;font-weight:500;color:#999;">
+        Lengkapi data di atas, lalu klik<br>
+        <strong style="color:#e53935;">Analisis Risiko Obesitas</strong>
+        untuk melihat laporan evaluasi dan hasil prediksi.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────────────
