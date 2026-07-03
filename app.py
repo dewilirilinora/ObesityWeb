@@ -642,10 +642,6 @@ st.markdown("""
       <div class="value">Stratified 10-Fold CV</div>
     </div>
     <div class="hero-meta-item">
-      <div class="label">Akurasi CV</div>
-      <div class="value">97.51%</div>
-    </div>
-    <div class="hero-meta-item">
       <div class="label">Kelas Output</div>
       <div class="value">7 Kategori Obesitas</div>
     </div>
@@ -696,6 +692,7 @@ with st.form("form_input"):
         # Slider untuk Pola Makan
         fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
         ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
+        ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)  # Dipindahkan ke sini
 
     with col3:
         st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
@@ -718,7 +715,6 @@ with st.form("form_input"):
                                  "no": "Tidak", "Sometimes": "Kadang-kadang",
                                  "Frequently": "Sering", "Always": "Selalu"
                              }[x])
-        ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)
         faf = st.slider("Aktivitas Fisik/Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
         tue = st.slider("Layar per Hari, Jam (TUE)", 0.0, 2.0, 1.0, 0.5)
 
@@ -868,7 +864,7 @@ if predict_btn:
 
         st.markdown("</div>", unsafe_allow_html=True)  # close section-card
 
-    # ── Kolom kanan: Hasil Prediksi (LANGSUNG TAMPIL, TANPA SECTION-CARD KOSONG) ──
+    # ── Kolom kanan: Hasil Prediksi ──
     with col_result:
         # Hasil Prediksi Model XGBoost
         st.markdown(f"""
