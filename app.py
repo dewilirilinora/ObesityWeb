@@ -671,8 +671,7 @@ with st.form("form_input"):
         st.markdown('<div class="input-group-title">Data Fisik</div>', unsafe_allow_html=True)
         gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
         age    = st.number_input("Usia (tahun)", min_value=10, max_value=60, value=25)
-        height = st.number_input("Tinggi Badan (m)", min_value=1.40, max_value=2.20,
-                                  value=1.68, step=0.01, format="%.2f")
+        height = st.number_input("Tinggi Badan (cm)", min_value=100, max_value=220, value=168, step=1)  # Diubah ke cm
         weight = st.number_input("Berat Badan (kg)", min_value=30.0, max_value=250.0,
                                   value=70.0, step=0.5, format="%.1f")
         family = st.selectbox("Riwayat Keluarga dengan Obesitas",
@@ -692,7 +691,7 @@ with st.form("form_input"):
         # Slider untuk Pola Makan
         fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
         ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
-        ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)  # Dipindahkan ke sini
+        ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)
 
     with col3:
         st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
@@ -728,8 +727,11 @@ st.markdown("</div>", unsafe_allow_html=True)  # close section-card input
 # HASIL — hanya tampil setelah tombol ditekan, di bawah form input
 # ──────────────────────────────────────────────────────────────
 if predict_btn:
+    # Konversi tinggi dari cm ke m untuk perhitungan BMI dan model
+    height_m = height / 100
+    
     input_df = pd.DataFrame([{
-        "Gender": gender, "Age": float(age), "Height": height, "Weight": weight,
+        "Gender": gender, "Age": float(age), "Height": height_m, "Weight": weight,
         "family_history_with_overweight": family,
         "FAVC": favc, "FCVC": fcvc, "NCP": ncp, "CAEC": caec,
         "SMOKE": smoke, "CH2O": ch2o, "SCC": scc,
@@ -849,7 +851,7 @@ if predict_btn:
             st.markdown(f"""
             <div class="metric-card">
               <div class="m-icon">📏</div>
-              <div class="m-val">{height:.2f} m</div>
+              <div class="m-val">{height} cm</div>
               <div class="m-lbl">Tinggi Badan</div>
             </div>
             """, unsafe_allow_html=True)
@@ -876,7 +878,7 @@ if predict_btn:
         """, unsafe_allow_html=True)
 
         # ── BMI ──
-        bmi = weight / (height ** 2)
+        bmi = weight / (height_m ** 2)
         bmi_cat, bmi_col, bmi_bg = bmi_category(bmi)
 
         st.markdown(f"""
