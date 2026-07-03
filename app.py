@@ -869,16 +869,7 @@ if predict_btn:
         st.markdown("</div>", unsafe_allow_html=True)  # close section-card
 
     # ── Kolom kanan: Hasil Prediksi ──
-    with col_result:
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-
-        st.markdown(f"""
-        <div class="result-banner {color}">
-          <div class="rb-label">Hasil Prediksi Model XGBoost</div>
-          <div class="rb-title">{label_text}</div>
-          <div class="rb-desc">{desc_text}</div>
-        </div>
-        """, unsafe_allow_html=True)
+    
 
         # Distribusi probabilitas semua kelas
         st.markdown('<div class="divider-label"><span>Distribusi Probabilitas Semua Kelas</span></div>',
