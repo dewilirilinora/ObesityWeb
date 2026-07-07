@@ -276,10 +276,25 @@ div[data-testid="stButton"] button:hover { opacity: 0.88 !important; }
     color: #000
 }
 
+/* Slider custom - menghilangkan angka desimal */
+.stSlider > div > div > div > div {
+    font-variant-numeric: tabular-nums;
+}
+
 /* Footer */
 .footer {
     text-align: center; padding: 28px 0 10px;
     font-size: 0.78rem; color: #bbb;
+}
+
+/* Keterangan slider */
+.slider-caption {
+    font-size: 0.7rem;
+    color: #999;
+    margin-top: -8px;
+    margin-bottom: 8px;
+    text-align: center;
+    font-style: italic;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -671,7 +686,7 @@ with st.form("form_input"):
         st.markdown('<div class="input-group-title">Data Fisik</div>', unsafe_allow_html=True)
         gender = st.selectbox("Jenis Kelamin", ["Male", "Female"])
         age    = st.number_input("Usia (tahun)", min_value=10, max_value=60, value=25)
-        height = st.number_input("Tinggi Badan (cm)", min_value=100, max_value=220, value=168, step=1)  # Diubah ke cm
+        height = st.number_input("Tinggi Badan (cm)", min_value=100, max_value=220, value=168, step=1)
         weight = st.number_input("Berat Badan (kg)", min_value=30.0, max_value=250.0,
                                   value=70.0, step=0.5, format="%.1f")
         family = st.selectbox("Riwayat Keluarga dengan Obesitas",
@@ -688,10 +703,15 @@ with st.form("form_input"):
                                  "no": "Tidak", "Sometimes": "Kadang-kadang",
                                  "Frequently": "Sering", "Always": "Selalu"
                              }[x])
-        # Slider untuk Pola Makan
-        fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 0.5)
-        ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 0.5)
-        ch2o = st.slider("Air Harian, Liter (CH2O)", 1.0, 3.0, 2.0, 0.5)
+        # Slider untuk Pola Makan - diubah step=1.0 agar nilainya 1,2,3
+        fcvc = st.slider("Frekuensi Sayur (FCVC)", 1.0, 3.0, 2.0, 1.0)
+        st.markdown('<div class="slider-caption">↗️ Semakin tinggi = sering makan sayur</div>', unsafe_allow_html=True)
+        
+        ncp = st.slider("Makan Utama/Hari (NCP)", 1.0, 4.0, 3.0, 1.0)
+        st.markdown('<div class="slider-caption">↗️ Semakin tinggi = lebih sering makan</div>', unsafe_allow_html=True)
+        
+        ch2o = st.slider("Air Harian (CH2O) - Liter", 1.0, 3.0, 2.0, 1.0)
+        st.markdown('<div class="slider-caption">↗️ Semakin tinggi = lebih banyak minum air</div>', unsafe_allow_html=True)
 
     with col3:
         st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
@@ -707,15 +727,18 @@ with st.form("form_input"):
                                    "Automobile": "Mobil", "Walking": "Jalan Kaki",
                                    "Motorbike": "Motor", "Bike": "Sepeda"
                                }[x])
-        # Slider untuk Gaya Hidup
+        # Slider untuk Gaya Hidup - diubah step=1.0 agar nilainya 0,1,2,3
         calc = st.selectbox("Konsumsi Alkohol (CALC)",
                              ["no", "Sometimes", "Frequently", "Always"],
                              format_func=lambda x: {
                                  "no": "Tidak", "Sometimes": "Kadang-kadang",
                                  "Frequently": "Sering", "Always": "Selalu"
                              }[x])
-        faf = st.slider("Aktivitas Fisik/Minggu (FAF)", 0.0, 3.0, 1.0, 0.5)
-        tue = st.slider("Layar per Hari, Jam (TUE)", 0.0, 2.0, 1.0, 0.5)
+        faf = st.slider("Aktivitas Fisik/Minggu (FAF)", 0.0, 3.0, 1.0, 1.0)
+        st.markdown('<div class="slider-caption">↗️ Semakin tinggi = lebih aktif</div>', unsafe_allow_html=True)
+        
+        tue = st.slider("Layar per Hari (TUE) - Jam", 0.0, 2.0, 1.0, 1.0)
+        st.markdown('<div class="slider-caption">↗️ Semakin tinggi = lebih lama di depan layar</div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     predict_btn = st.form_submit_button(" Analisis Risiko Obesitas", use_container_width=True)
