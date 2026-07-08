@@ -626,7 +626,7 @@ def generate_recommendations(pred_label, favc, fcvc, caec, family, faf, ch2o,
 # ──────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="hero-wrap">
-  <div class="hero-badge"> Machine Learning · XGBoost · Stratified 10-Fold CV</div>
+  <div class="hero-badge"> Machine Learning · XGBoost · 10-Fold CV</div>
   <h1 class="hero-title">Prediksi Tingkat<br><span>Risiko Obesitas</span></h1>
   <p class="hero-sub">
     Sistem prediksi berbasis <em>machine learning</em> untuk mendeteksi tingkat risiko obesitas
