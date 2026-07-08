@@ -731,8 +731,8 @@ with st.form("form_input"):
                                  "no": "Tidak", "Sometimes": "Kadang-kadang",
                                  "Frequently": "Sering", "Always": "Selalu"
                              }[x])
-        faf = st.slider("Aktivitas Fisik/Minggu", 0.0, 3.0, 1.0, 0.9)
-        tue = st.slider("Layar per Hari, Jam", 0.0, 2.0, 1.0, 0.9)
+        faf = st.slider("Aktivitas Fisik/Minggu", 0.0, 3.0, 1.0, 1.0)
+        tue = st.slider("Layar per Hari, Jam", 0.0, 2.0, 1.0, 1.0)
 
     st.markdown("<br>", unsafe_allow_html=True)
     predict_btn = st.form_submit_button(" Analisis Risiko Obesitas", use_container_width=True)
