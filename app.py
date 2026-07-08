@@ -639,7 +639,7 @@ st.markdown("""
     </div>
     <div class="hero-meta-item">
       <div class="label">Validasi</div>
-      <div class="value">Stratified 10-Fold CV</div>
+      <div class="value"> 10-Fold CV</div>
     </div>
     <div class="hero-meta-item">
       <div class="label">Kelas Output</div>
