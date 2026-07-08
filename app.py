@@ -677,28 +677,39 @@ with st.form("form_input"):
         family = st.selectbox("Riwayat Keluarga dengan Obesitas",
                                ["yes", "no"], format_func=lambda x: "Ya" if x == "yes" else "Tidak")
 
-    with col2:
+       with col2:
         st.markdown('<div class="input-group-title">Pola Makan</div>', unsafe_allow_html=True)
-        favc = st.selectbox("Konsumsi Makanan Tinggi Kalori",
-                             ["yes", "no"], format_func=lambda x: "Ya" if x == "yes" else "Tidak")
-        caec = st.selectbox("Konsumsi Makanan Ringan",
-                             ["no", "Sometimes", "Frequently", "Always"],
-                             index=1,
-                             format_func=lambda x: {
-                                 "no": "Tidak", "Sometimes": "Kadang-kadang",
-                                 "Frequently": "Sering", "Always": "Selalu"
-                             }[x])
-         fcvc = st.selectbox("Konsumsi Sayur/Hari",
-                                [1.0, 2.0, 3.0],
-                            format_func=lambda x: {
-                                    1.0: "Sedikit",
-                                    2.0: "Sedang",
-                                    3.0: "Banyak"
-                                }[x])
-        # Slider untuk Pola Makan
+
+        favc = st.selectbox(
+            "Konsumsi Makanan Tinggi Kalori",
+            ["yes", "no"],
+            format_func=lambda x: "Ya" if x == "yes" else "Tidak"
+        )
+
+        caec = st.selectbox(
+            "Konsumsi Makanan Ringan",
+            ["no", "Sometimes", "Frequently", "Always"],
+            index=1,
+            format_func=lambda x: {
+                "no": "Tidak",
+                "Sometimes": "Kadang-kadang",
+                "Frequently": "Sering",
+                "Always": "Selalu"
+            }[x]
+        )
+
+        fcvc = st.selectbox(
+            "Konsumsi Sayur/Hari",
+            [1.0, 2.0, 3.0],
+            format_func=lambda x: {
+                1.0: "Sedikit",
+                2.0: "Sedang",
+                3.0: "Banyak"
+            }[x]
+        )
+
         ncp = st.slider("Makan Utama/Hari", 1.0, 4.0, 3.0, 1.0)
         ch2o = st.slider("Air Harian, Liter", 1.0, 3.0, 2.0, 1.0)
-
     with col3:
         st.markdown('<div class="input-group-title">Kebiasaan & Gaya Hidup</div>', unsafe_allow_html=True)
         smoke = st.selectbox("Merokok",
