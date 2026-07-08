@@ -688,7 +688,8 @@ with st.form("form_input"):
                                  "no": "Tidak", "Sometimes": "Kadang-kadang",
                                  "Frequently": "Sering", "Always": "Selalu"
                              }[x])
-       fcvc = st.selectbox("Konsumsi Sayur/Hari", [1.0, 2.0, 3.0],
+       fcvc = st.selectbox("Konsumsi Sayur/Hari",
+                           [1.0, 2.0, 3.0],
                             format_func=lambda x: {1.0: "Sedikit", 2.0: "Sedang", 3.0: "Banyak"
                             }[x])
         # Slider untuk Pola Makan
