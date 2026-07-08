@@ -677,7 +677,7 @@ with st.form("form_input"):
         family = st.selectbox("Riwayat Keluarga dengan Obesitas",
                                ["yes", "no"], format_func=lambda x: "Ya" if x == "yes" else "Tidak")
 
-       with col2:
+    with col2:
         st.markdown('<div class="input-group-title">Pola Makan</div>', unsafe_allow_html=True)
 
         favc = st.selectbox(
